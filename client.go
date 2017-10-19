@@ -84,6 +84,9 @@ func (cli *Client) doRequest(method, path string, body io.Reader) (*http.Respons
 	}
 
 	req.Header.Set("Authorization", "Token "+cli.authToken)
+	if method == "POST" {
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	}
 
 	return http.DefaultClient.Do(req)
 }

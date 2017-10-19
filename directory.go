@@ -1,9 +1,11 @@
 package seafile
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 )
 
@@ -71,4 +73,23 @@ func (cli *Client) ListDirectoryEntriesWithOption(libId, path string, query url.
 	}
 
 	return info, nil
+}
+
+//在资料库创建目录
+//  NOTE: 如果指定目录以及存在，会自动创建重命名后的目录，而不会失败
+func (cli *Client) DirectoryCreate(libId, path string) error {
+	query := url.Values{"p": {path}}
+	resp, err := cli.doRequest("POST", "/repos/"+libId+"/dir/?"+query.Encode(), bytes.NewBufferString("operation=mkdir"))
+	if err != nil {
+		return fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	b, _ := ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode == http.StatusCreated {
+		return nil
+	}
+
+	return fmt.Errorf("%s %s", resp.Status, string(b))
 }
