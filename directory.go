@@ -55,7 +55,7 @@ func (cli *Client) ListDirectoryEntriesWithOption(libId, path string, query url.
 
 	query.Set("p", path)
 
-	resp, err := cli.doRequest("GET", "/repos/"+libId+"/dir/?"+query.Encode(), nil)
+	resp, err := cli.doRequest("GET", "/repos/"+libId+"/dir/?"+query.Encode(), nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("请求错误:%s", err)
 	}
@@ -79,7 +79,12 @@ func (cli *Client) ListDirectoryEntriesWithOption(libId, path string, query url.
 //  NOTE: 如果指定目录以及存在，会自动创建重命名后的目录，而不会失败
 func (cli *Client) DirectoryCreate(libId, path string) error {
 	query := url.Values{"p": {path}}
-	resp, err := cli.doRequest("POST", "/repos/"+libId+"/dir/?"+query.Encode(), bytes.NewBufferString("operation=mkdir"))
+	uri := "/repos/" + libId + "/dir/?" + query.Encode()
+
+	body := bytes.NewBufferString("operation=mkdir")
+	header := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
+
+	resp, err := cli.doRequest("POST", uri, header, body)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}

@@ -19,7 +19,7 @@ type Account struct {
 
 //自动添加Token后执行请求
 func (cli *Client) AccountInfo() (Account, error) {
-	resp, err := cli.doRequest("GET", "/account/info/", nil)
+	resp, err := cli.doRequest("GET", "/account/info/", nil, nil)
 	if err != nil {
 		return Account{}, fmt.Errorf("请求错误:%s", err)
 	}

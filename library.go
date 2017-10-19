@@ -63,7 +63,7 @@ func (cli *Client) ListLibrariesByType(libType string) ([]Library, error) {
 		path += "?type=" + libType
 	}
 
-	resp, err := cli.doRequest("GET", path, nil)
+	resp, err := cli.doRequest("GET", path, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("请求错误:%s", err)
 	}
