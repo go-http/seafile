@@ -13,7 +13,7 @@ const (
 	LibraryTypeOrg    = "org"    //公共资料库类型
 )
 
-//账户信息
+//资料库信息
 type Library struct {
 	Encrypted bool
 	Virtual   bool
