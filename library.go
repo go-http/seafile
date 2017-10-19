@@ -16,9 +16,14 @@ const (
 	LibraryTypeOrg    = "org"    //公共资料库类型
 )
 
-//资料库信息
+//资料库
 type Library struct {
-	client *Client
+	Id         string
+	Name       string
+	Type       string
+	Root       string
+	Owner      string
+	Permission string
 
 	Encrypted bool
 	Virtual   bool
@@ -26,50 +31,46 @@ type Library struct {
 	Mtime     int
 	Size      int
 
-	Permission     string
-	Mtime_relative string `json:"mtime_relative"`
-	Owner          string
-	Root           string
-	Id             string
-	Name           string
-	Type           string
-	HeadCommitId   string `json:"head_commit_id"`
-	SizeFormatted  string `json:"size_formatted"`
+	MtimeRelative string `json:"mtime_relative"`
+	HeadCommitId  string `json:"head_commit_id"`
+	SizeFormatted string `json:"size_formatted"`
+
+	client *Client
 }
 
-//获取所有可用资料库列表
+//获取可用的资料库
 func (cli *Client) ListAllLibraries() ([]*Library, error) {
 	return cli.ListLibrariesByType("")
 }
 
-//获取我的资料库列表
+//获取拥有的资料库
 func (cli *Client) ListOwnedLibraries() ([]*Library, error) {
 	return cli.ListLibrariesByType(LibraryTypeMine)
 }
 
-//获取私人共享给我的资料库列表
+//获取私人共享而来的资料库
 func (cli *Client) ListSharedLibraries() ([]*Library, error) {
 	return cli.ListLibrariesByType(LibraryTypeShared)
 }
 
-//获取群组共享的资料库列表
+//获取群组共享而来的资料库
 func (cli *Client) ListGroupLibraries() ([]*Library, error) {
 	return cli.ListLibrariesByType(LibraryTypeGroup)
 }
 
-//获取公共的资料库列表
+//获取公共的资料库
 func (cli *Client) ListOrgLibraries() ([]*Library, error) {
 	return cli.ListLibrariesByType(LibraryTypeOrg)
 }
 
-//获取指定类型的资料库列表
+//获取指定类型的资料库
 func (cli *Client) ListLibrariesByType(libType string) ([]*Library, error) {
-	path := "/repos/"
+	uri := "/repos/"
 	if libType != "" {
-		path += "?type=" + libType
+		uri += "?type=" + libType
 	}
 
-	resp, err := cli.doRequest("GET", path, nil, nil)
+	resp, err := cli.doRequest("GET", uri, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("请求错误:%s", err)
 	}
