@@ -13,7 +13,7 @@ type Server struct {
 
 //获取服务器信息
 func (cli *Client) ServerInfo() (Server, error) {
-	resp, err := cli.doRequest("GET", "/server-info/", nil)
+	resp, err := cli.doRequest("GET", "/server-info/", nil, nil)
 	if err != nil {
 		return Server{}, fmt.Errorf("请求错误:%s", err)
 	}
