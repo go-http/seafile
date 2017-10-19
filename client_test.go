@@ -20,10 +20,18 @@ func TestAuthToken(t *testing.T) {
 	username := os.Getenv("SEAFILE_USER")
 	password := os.Getenv("SEAFILE_PASS")
 
-	token, err := New(hostname).AuthToken(username, password)
+	client := New(hostname)
+	token, err := client.AuthToken(username, password)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("获取到Token", token)
+
+	result, err := client.AuthPing()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("Auth ping返回", result)
 }
