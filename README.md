@@ -1,5 +1,5 @@
-# seafile-go
-Golang版本的Seafile客户端，基于Seafile服务器提供的Web API实现。
+# Seafile SDK For Golang
+Golang版本的Seafile Web API库
 
 # 当前支持的接口
 - [ ] 基础接口（Basic）
