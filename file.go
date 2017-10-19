@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 )
@@ -130,5 +131,27 @@ func (cli *Client) UpdateFileContent(libId, targetFile string, content []byte) e
 	}
 
 	fmt.Println("文件ID", string(b))
+	return nil
+}
+
+//删除文件
+func (cli *Client) RemoveFile(libId, file string) error {
+	query := url.Values{"p": {file}}
+	uri := "/repos/" + libId + "/file/?" + query.Encode()
+	resp, err := cli.doRequest("DELETE", uri, nil, nil)
+	if err != nil {
+		return fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("读取错误:%s %s", resp.Status, err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("错误:%s %s", resp.Status, string(b))
+	}
+
 	return nil
 }
