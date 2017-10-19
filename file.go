@@ -15,7 +15,7 @@ import (
 //上传文件内容
 //    fileContentMap的key是文件名，value是文件内容
 //当目标文件存在时，会自动重命名上传
-func (cli *Client) UploadFileContent(libId, parentDir string, fileContentMap map[string][]byte) error {
+func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[string][]byte) error {
 	//参数检查
 	if !strings.HasSuffix(parentDir, "/") {
 		return fmt.Errorf("目录%s必须以/结尾", parentDir)
@@ -50,13 +50,13 @@ func (cli *Client) UploadFileContent(libId, parentDir string, fileContentMap map
 	header := http.Header{"Content-Type": {writer.FormDataContentType()}}
 
 	//获取上传地址
-	uploadLink, err := cli.LibraryUploadLink(libId)
+	uploadLink, err := lib.UploadLink()
 	if err != nil {
 		return fmt.Errorf("获取上传地址错误:%s", err)
 	}
 
 	//执行上传
-	resp, err := cli.doRequest("POST", uploadLink+"?ret-json=1", header, body)
+	resp, err := lib.doRequest("POST", uploadLink+"?ret-json=1", header, body)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
@@ -81,7 +81,7 @@ func (cli *Client) UploadFileContent(libId, parentDir string, fileContentMap map
 //更新文件内容
 //    fileContentMap的key是文件名，value是文件内容
 //当目标文件存在时，会自动重命名上传
-func (cli *Client) UpdateFileContent(libId, targetFile string, content []byte) error {
+func (lib *Library) UpdateFileContent(targetFile string, content []byte) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -109,13 +109,13 @@ func (cli *Client) UpdateFileContent(libId, targetFile string, content []byte) e
 	header := http.Header{"Content-Type": {writer.FormDataContentType()}}
 
 	//获取上传地址
-	updateLink, err := cli.LibraryUpdateLink(libId)
+	updateLink, err := lib.UpdateLink()
 	if err != nil {
 		return fmt.Errorf("获取上传地址错误:%s", err)
 	}
 
 	//执行上传
-	resp, err := cli.doRequest("POST", updateLink, header, body)
+	resp, err := lib.doRequest("POST", updateLink, header, body)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
@@ -135,10 +135,9 @@ func (cli *Client) UpdateFileContent(libId, targetFile string, content []byte) e
 }
 
 //删除文件
-func (cli *Client) RemoveFile(libId, file string) error {
+func (lib *Library) RemoveFile(file string) error {
 	query := url.Values{"p": {file}}
-	uri := "/repos/" + libId + "/file/?" + query.Encode()
-	resp, err := cli.doRequest("DELETE", uri, nil, nil)
+	resp, err := lib.doRequest("DELETE", "/file/?"+query.Encode(), nil, nil)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
