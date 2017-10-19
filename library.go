@@ -129,3 +129,53 @@ func (lib *Library) UpdateLink() (string, error) {
 	//返回值是"xxx"格式的，需要去掉头尾的引号
 	return string(b[1 : len(b)-1]), nil
 }
+
+//资料库提交
+type LibraryCommit struct {
+	Id                string
+	Desc              string
+	Ctime             int
+	Creator           string
+	Conflict          bool
+	NewMerge          bool   `json:"new_merge"`
+	CreatorName       string `json:"creator_name"`
+	RootId            string `json:"root_id"`
+	RepoId            string `json:"repo_id"`
+	ParentId          string `json:"parent_id"`
+	SecondParentId    string `json:"second_parent_id"`
+	RevFileSize       int    `json:"rev_file_size"`
+	RevFileId         string `json:"rev_file_id"`
+	RevRenamedOldPath string `json:"rev_renamed_old_path"`
+
+	library *Library `json:"-"`
+}
+
+//获取资料库的提交历史
+func (lib *Library) History() ([]*LibraryCommit, error) {
+	resp, err := lib.doRequest("GET", "/history", nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("读取错误: %s", err)
+	}
+
+	var respInfo struct {
+		PageNext bool `json:"page_next"`
+		Commits  []*LibraryCommit
+	}
+
+	err = json.Unmarshal(b, &respInfo)
+	if err != nil {
+		return nil, fmt.Errorf("解析错误: %s %s", err, string(b))
+	}
+
+	for _, commit := range respInfo.Commits {
+		commit.library = lib
+	}
+
+	return respInfo.Commits, nil
+}
