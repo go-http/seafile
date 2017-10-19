@@ -33,3 +33,22 @@ func TestAuthPing(t *testing.T) {
 
 	t.Log("Auth ping返回", result)
 }
+
+func TestServerInfo(t *testing.T) {
+	hostname := os.Getenv("SEAFILE_HOST")
+	username := os.Getenv("SEAFILE_USER")
+	password := os.Getenv("SEAFILE_PASS")
+
+	client := New(hostname)
+	err := client.Auth(username, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	info, err := client.ServerInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("%+v", info)
+}
