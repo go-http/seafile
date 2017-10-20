@@ -89,6 +89,22 @@ func (cli *Client) ListLibrariesByType(libType string) ([]*Library, error) {
 	return info, nil
 }
 
+//获取公共的资料库
+func (cli *Client) GetLibrary(name string) (*Library, error) {
+	libraries, err := cli.ListAllLibraries()
+	if err != nil {
+		return nil, fmt.Errorf("获取资料库列表失败: %s", err)
+	}
+
+	for _, library := range libraries {
+		if library.Name == name {
+			return library, nil
+		}
+	}
+
+	return nil, fmt.Errorf("未找到资料库")
+}
+
 func (lib *Library) doRequest(method, uri string, header http.Header, body io.Reader) (*http.Response, error) {
 	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
 		uri = "/repos/" + lib.Id + uri
