@@ -1,7 +1,6 @@
 package main
 
 import (
-	".."
 	"fmt"
 	"os"
 	"time"
@@ -38,13 +37,7 @@ func CommandLs(args ...string) {
 	libName, dir := parseDirectory(args[0])
 
 	//获取资料库
-	var err error
-	var library *seafile.Library
-	if libName == "" {
-		library, err = sf.GetDefaultLibrary()
-	} else {
-		library, err = sf.GetLibrary(libName)
-	}
+	library, err := sf.GetLibrary(libName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "获取资料库失败%s:\n", err)
 		return

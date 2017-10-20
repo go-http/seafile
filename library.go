@@ -89,27 +89,49 @@ func (cli *Client) ListLibrariesByType(libType string) ([]*Library, error) {
 	return info, nil
 }
 
-//获取指定名称的资料库
+//获取默认资料库
+func (cli *Client) GetDefaultLibrary() (*Library, error) {
+	return cli.GetLibrary("")
+}
+
 func (cli *Client) GetLibrary(name string) (*Library, error) {
+	var id string
+	var err error
+	//如果name为空字符串，则获取默认资料库
+	if name == "" {
+		id,err = cli.GetDefaultLibraryId()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	libraries, err := cli.ListAllLibraries()
 	if err != nil {
 		return nil, fmt.Errorf("获取资料库列表失败: %s", err)
 	}
 
-	for _, library := range libraries {
-		if library.Name == name {
-			return library, nil
+	if name == "" {
+		for _, library := range libraries {
+			if library.Id == id {
+				return library, nil
+			}
+		}
+	} else {
+		for _, library := range libraries {
+			if library.Name == name {
+				return library, nil
+			}
 		}
 	}
 
 	return nil, fmt.Errorf("未找到资料库")
 }
 
-//获取默认资料库
-func (cli *Client) GetDefaultLibrary() (*Library, error) {
+//获取默认资料库ID
+func (cli *Client) GetDefaultLibraryId() (string, error) {
 	resp,err := cli.doRequest("GET", "/default-repo/", nil, nil)
 	if err!=nil {
-		return nil, fmt.Errorf("获取默认资料库失败: %s", err)
+		return "", fmt.Errorf("获取默认资料库失败: %s", err)
 	}
 	defer resp.Body.Close()
 
@@ -120,26 +142,14 @@ func (cli *Client) GetDefaultLibrary() (*Library, error) {
 
 	err = json.NewDecoder(resp.Body).Decode(&respInfo)
 	if err!=nil {
-		return nil, fmt.Errorf("获取默认资料库失败: %s", err)
+		return "", fmt.Errorf("获取默认资料库失败: %s", err)
 	}
 
 	if !respInfo.Exists {
-		return nil, fmt.Errorf("默认资料库不存在")
+		return "", fmt.Errorf("默认资料库不存在")
 	}
 
-	libraries, err := cli.ListAllLibraries()
-	if err != nil {
-		return nil, fmt.Errorf("获取资料库列表失败: %s", err)
-	}
-
-	for _, library := range libraries {
-		if library.Id == respInfo.RepoId {
-			return library, nil
-		}
-	}
-
-	return nil, fmt.Errorf("未找到资料库")
-
+	return respInfo.RepoId, nil
 }
 
 func (lib *Library) doRequest(method, uri string, header http.Header, body io.Reader) (*http.Response, error) {
