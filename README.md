@@ -1,7 +1,7 @@
 # Seafile SDK For Golang
 Golang版本的Seafile Web API库
 
-# 当前支持的接口
+# 当前支持的v2接口
 - [x] 基础接口（Basic）
   - [x] Token获取（AuthToken）
   - [x] Ping
@@ -30,6 +30,10 @@ Golang版本的Seafile Web API库
   - [x] 重命名文件
   - [x] 复制到其他资料库 
   - [x] 移动到其他资料库 
+
+# 当前支持的v2.1接口
+- [x] 资料库
+  - [x] 获取资料库信息
 
 # TBD
 由于目前Seafile官方的文档并不完善，尤其是错误处理方面。有时候用HTTP状态吗、有时候用字符串、有时候用非固定的JSON字符串。
