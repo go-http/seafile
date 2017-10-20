@@ -1,6 +1,7 @@
 package main
 
 import (
+	".."
 	"fmt"
 	"os"
 	"time"
@@ -37,7 +38,13 @@ func CommandLs(args ...string) {
 	libName, dir := parseDirectory(args[0])
 
 	//获取资料库
-	library, err := sf.GetLibrary(libName)
+	var err error
+	var library *seafile.Library
+	if libName == "" {
+		library, err = sf.GetDefaultLibrary()
+	} else {
+		library, err = sf.GetLibrary(libName)
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "获取资料库失败%s:\n", err)
 		return
@@ -51,7 +58,7 @@ func CommandLs(args ...string) {
 	}
 
 	//输出文件夹内容
-	fmt.Printf("%s%s 中有%d个项目\n", libName, dir, len(entries))
+	fmt.Printf("%s%s 中有%d个项目\n", library.Name, dir, len(entries))
 	for _, e := range entries {
 		t := time.Unix(int64(e.Mtime), 0).Format("2006-01-02 15:04:05")
 		name := e.Name
