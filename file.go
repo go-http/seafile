@@ -225,3 +225,70 @@ func (lib *Library) RenameFile(path, newname string) error {
 
 	return fmt.Errorf("[%s] %s", resp.Status, string(b))
 }
+
+//复制文件到另一个资料库的指定目录
+//Note:
+//  目标目录必须存在
+//  目标目录下如果有同名文件，新文件会自动重命名
+func (lib *Library) CopyFileToLibrary(path, dstLibId, dstLibPath string) error {
+	q := url.Values{"p": {path}}
+
+	d := url.Values{
+		"operation": {"copy"},
+		"dst_repo":  {dstLibId},
+		"dst_dir":   {dstLibPath},
+	}
+	body := bytes.NewBufferString(d.Encode())
+
+	hdr := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
+
+	resp, err := lib.doRequest("POST", "/file/?"+q.Encode(), hdr, body)
+	if err != nil {
+		return fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil || len(b) == 0 {
+		return fmt.Errorf("读取错误: %s", err)
+	}
+
+	//FIXME:文档上说返回HTTP 301为成功，实测却是HTTP 200。
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	return fmt.Errorf("[%s] %s", resp.Status, string(b))
+}
+
+//复制文件到另一个资料库的指定目录，目标目录必须存在
+func (lib *Library) MoveFileToLibrary(path, dstLibId, dstLibPath string) error {
+	q := url.Values{"p": {path}}
+
+	d := url.Values{
+		"operation": {"move"},
+		"dst_repo":  {dstLibId},
+		"dst_dir":   {dstLibPath},
+	}
+	body := bytes.NewBufferString(d.Encode())
+
+	hdr := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
+
+	resp, err := lib.doRequest("POST", "/file/?"+q.Encode(), hdr, body)
+	if err != nil {
+		return fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil || len(b) == 0 {
+		return fmt.Errorf("读取错误: %s", err)
+	}
+
+	//FIXME:文档上说返回HTTP 301为成功，实测却是HTTP 200。
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	return fmt.Errorf("[%s] %s", resp.Status, string(b))
+}
