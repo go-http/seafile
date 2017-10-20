@@ -24,6 +24,7 @@ Golang版本的Seafile Web API库
 - [ ] 目录
   - [x] 获取目录内容
   - [x] 创建目录
+  - [x] 重命名目录
   - [x] 删除目录
 
 # TBD
