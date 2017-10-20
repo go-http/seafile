@@ -63,8 +63,6 @@ func (lib *Library) ListDirectoryEntriesWithOption(path string, query url.Values
 
 	b, _ := ioutil.ReadAll(resp.Body)
 
-	fmt.Println(string(b))
-
 	info := []DirectoryEntry{}
 	//err = json.NewDecoder(resp.Body).Decode(&info)
 	err = json.Unmarshal(b, &info)
