@@ -99,7 +99,7 @@ func (cli *Client) GetLibrary(name string) (*Library, error) {
 	var err error
 	//如果name为空字符串，则获取默认资料库
 	if name == "" {
-		id,err = cli.GetDefaultLibraryId()
+		id, err = cli.GetDefaultLibraryId()
 		if err != nil {
 			return nil, err
 		}
@@ -129,19 +129,19 @@ func (cli *Client) GetLibrary(name string) (*Library, error) {
 
 //获取默认资料库ID
 func (cli *Client) GetDefaultLibraryId() (string, error) {
-	resp,err := cli.doRequest("GET", "/default-repo/", nil, nil)
-	if err!=nil {
+	resp, err := cli.doRequest("GET", "/default-repo/", nil, nil)
+	if err != nil {
 		return "", fmt.Errorf("获取默认资料库失败: %s", err)
 	}
 	defer resp.Body.Close()
 
-	var respInfo struct{
+	var respInfo struct {
 		Exists bool
 		RepoId string `json:"repo_id"`
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&respInfo)
-	if err!=nil {
+	if err != nil {
 		return "", fmt.Errorf("获取默认资料库失败: %s", err)
 	}
 
