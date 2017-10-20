@@ -7,15 +7,13 @@ import (
 
 func TestPing(t *testing.T) {
 	hostname := os.Getenv("SEAFILE_HOST")
-	result, err := New(hostname).Ping()
+	err := New(hostname).Ping()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	t.Log("Ping返回", result)
 }
 
-func TestAuthPing(t *testing.T) {
+func TestAuth(t *testing.T) {
 	hostname := os.Getenv("SEAFILE_HOST")
 	username := os.Getenv("SEAFILE_USER")
 	password := os.Getenv("SEAFILE_PASS")
@@ -26,12 +24,10 @@ func TestAuthPing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := client.AuthPing()
+	err = client.AuthPing()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	t.Log("Auth ping返回", result)
 }
 
 func TestServerInfo(t *testing.T) {
