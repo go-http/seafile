@@ -105,6 +105,43 @@ func (cli *Client) GetLibrary(name string) (*Library, error) {
 	return nil, fmt.Errorf("未找到资料库")
 }
 
+//获取默认资料库
+func (cli *Client) GetDefaultLibrary() (*Library, error) {
+	resp,err := cli.doRequest("GET", "/default-repo/", nil, nil)
+	if err!=nil {
+		return nil, fmt.Errorf("获取默认资料库失败: %s", err)
+	}
+	defer resp.Body.Close()
+
+	var respInfo struct{
+		Exists bool
+		RepoId string `json:"repo_id"`
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&respInfo)
+	if err!=nil {
+		return nil, fmt.Errorf("获取默认资料库失败: %s", err)
+	}
+
+	if !respInfo.Exists {
+		return nil, fmt.Errorf("默认资料库不存在")
+	}
+
+	libraries, err := cli.ListAllLibraries()
+	if err != nil {
+		return nil, fmt.Errorf("获取资料库列表失败: %s", err)
+	}
+
+	for _, library := range libraries {
+		if library.Id == respInfo.RepoId {
+			return library, nil
+		}
+	}
+
+	return nil, fmt.Errorf("未找到资料库")
+
+}
+
 func (lib *Library) doRequest(method, uri string, header http.Header, body io.Reader) (*http.Response, error) {
 	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
 		uri = "/repos/" + lib.Id + uri
