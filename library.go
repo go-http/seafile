@@ -89,7 +89,7 @@ func (cli *Client) ListLibrariesByType(libType string) ([]*Library, error) {
 	return info, nil
 }
 
-//获取公共的资料库
+//获取指定名称的资料库
 func (cli *Client) GetLibrary(name string) (*Library, error) {
 	libraries, err := cli.ListAllLibraries()
 	if err != nil {
