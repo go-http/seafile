@@ -21,30 +21,30 @@ type DirectoryEntry struct {
 }
 
 //列出资料库中指定位置目录的文件和子目录
-func (cli *Client) ListDirectoryEntries(libId, path string) ([]DirectoryEntry, error) {
-	return cli.ListDirectoryEntriesWithOption(libId, path, nil)
+func (lib *Library) ListDirectoryEntries(path string) ([]DirectoryEntry, error) {
+	return lib.ListDirectoryEntriesWithOption(path, nil)
 }
 
 //列出资料库中指定位置目录的文件
-func (cli *Client) ListDirectoryFileEntries(libId, path string) ([]DirectoryEntry, error) {
+func (lib *Library) ListDirectoryFileEntries(path string) ([]DirectoryEntry, error) {
 	query := url.Values{"t": {"f"}}
-	return cli.ListDirectoryEntriesWithOption(libId, path, query)
+	return lib.ListDirectoryEntriesWithOption(path, query)
 }
 
 //列出资料库中指定位置目录的子目录
-func (cli *Client) ListDirectoryDirectoryEntries(libId, path string) ([]DirectoryEntry, error) {
+func (lib *Library) ListDirectoryDirectoryEntries(path string) ([]DirectoryEntry, error) {
 	query := url.Values{"t": {"d"}}
-	return cli.ListDirectoryEntriesWithOption(libId, path, query)
+	return lib.ListDirectoryEntriesWithOption(path, query)
 }
 
 //列出资料库中指定位置目录下的所有目录，并递归地获取其子目录下的目录
-func (cli *Client) ListDirectoryEntriesRecursive(libId, path string) ([]DirectoryEntry, error) {
+func (lib *Library) ListDirectoryEntriesRecursive(path string) ([]DirectoryEntry, error) {
 	query := url.Values{"t": {"d"}, "recursive": {"1"}}
-	return cli.ListDirectoryEntriesWithOption(libId, path, query)
+	return lib.ListDirectoryEntriesWithOption(path, query)
 }
 
 //列出资料库指定位置的目录内容
-func (cli *Client) ListDirectoryEntriesWithOption(libId, path string, query url.Values) ([]DirectoryEntry, error) {
+func (lib *Library) ListDirectoryEntriesWithOption(path string, query url.Values) ([]DirectoryEntry, error) {
 	if query == nil {
 		query = url.Values{}
 	}
@@ -55,7 +55,7 @@ func (cli *Client) ListDirectoryEntriesWithOption(libId, path string, query url.
 
 	query.Set("p", path)
 
-	resp, err := cli.doRequest("GET", "/repos/"+libId+"/dir/?"+query.Encode(), nil, nil)
+	resp, err := lib.doRequest("GET", "/dir/?"+query.Encode(), nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("请求错误:%s", err)
 	}
@@ -77,14 +77,15 @@ func (cli *Client) ListDirectoryEntriesWithOption(libId, path string, query url.
 
 //在资料库创建目录
 //  NOTE: 如果指定目录以及存在，会自动创建重命名后的目录，而不会失败
-func (cli *Client) DirectoryCreate(libId, path string) error {
+func (lib *Library) CreateDirectory(path string) error {
 	query := url.Values{"p": {path}}
-	uri := "/repos/" + libId + "/dir/?" + query.Encode()
+	uri := "/dir/?" + query.Encode()
 
 	body := bytes.NewBufferString("operation=mkdir")
+
 	header := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
 
-	resp, err := cli.doRequest("POST", uri, header, body)
+	resp, err := lib.doRequest("POST", uri, header, body)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
@@ -100,10 +101,9 @@ func (cli *Client) DirectoryCreate(libId, path string) error {
 }
 
 //删除目录
-func (cli *Client) RemoveDirectory(libId, dir string) error {
+func (lib *Library) RemoveDirectory(dir string) error {
 	query := url.Values{"p": {dir}}
-	uri := "/repos/" + libId + "/dir/?" + query.Encode()
-	resp, err := cli.doRequest("DELETE", uri, nil, nil)
+	resp, err := lib.doRequest("DELETE", "/dir/?"+query.Encode(), nil, nil)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
