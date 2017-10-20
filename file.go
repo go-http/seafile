@@ -68,9 +68,6 @@ func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[strin
 		return fmt.Errorf("解析错误:%s", err)
 	}
 
-	//Debug output
-	fmt.Printf("返回%+v\n", respInfo)
-
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("返回%s", resp.Status)
 	}
