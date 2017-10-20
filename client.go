@@ -30,7 +30,10 @@ func New(hostname string, authParams ...string) *Client {
 	if len(authParams) == 1 {
 		client.authToken = authParams[0]
 	} else if len(authParams) == 2 {
-		client.Auth(authParams[0], authParams[1])
+		err := client.Auth(authParams[0], authParams[1])
+		if err !=nil {
+			fmt.Printf("用户认证失败: %s",err)
+		}
 	}
 
 	return client
