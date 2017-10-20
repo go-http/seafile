@@ -154,3 +154,43 @@ func (lib *Library) RemoveFile(file string) error {
 
 	return nil
 }
+
+//生成文件下载的链接
+//    该链接有效期只有一个小时，过期后无效
+//    reuse设置为true时可以不限访问次数，否则访问一次后链接就无效
+func (lib *Library) GenerateFileDownloadLink(path string, reuse bool) (string, error) {
+	q := url.Values{"p": {path}}
+	if reuse {
+		q.Set("reuse", "1")
+	}
+
+	resp, err := lib.doRequest("GET", "/file/?"+q.Encode(), nil, nil)
+	if err != nil {
+		return "", fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil || len(b) == 0 {
+		return "", fmt.Errorf("读取下载地址错误: %s", err)
+	}
+
+	//需要去掉头尾的引号
+	return string(b[1 : len(b)-1]), nil
+}
+
+//获取文件内容
+func (lib *Library) FetchFileContent(path string) ([]byte, error) {
+	link, err := lib.GenerateFileDownloadLink(path, false)
+	if err != nil {
+		return nil, fmt.Errorf("请求下载地址错误:%s", err)
+	}
+
+	resp, err := http.Get(link)
+	if err != nil {
+		return nil, fmt.Errorf("读取文件内容错误: %s", err)
+	}
+	defer resp.Body.Close()
+
+	return ioutil.ReadAll(resp.Body)
+}
