@@ -56,11 +56,16 @@ func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[strin
 	}
 
 	//执行上传
-	resp, err := lib.doRequest("POST", uploadLink+"?ret-json=1", header, body)
+	resp, err := lib.client.request("POST", uploadLink + "?ret-json=1", header, body)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("[%s] %s", resp.Status, string(b))
+	}
 
 	respInfo := []DirectoryEntry{}
 	err = json.NewDecoder(resp.Body).Decode(&respInfo)
@@ -68,16 +73,11 @@ func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[strin
 		return fmt.Errorf("解析错误:%s", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("返回%s", resp.Status)
-	}
-
 	return nil
 }
 
 //更新文件内容
 //    fileContentMap的key是文件名，value是文件内容
-//当目标文件存在时，会自动重命名上传
 func (lib *Library) UpdateFileContent(targetFile string, content []byte) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -112,19 +112,20 @@ func (lib *Library) UpdateFileContent(targetFile string, content []byte) error {
 	}
 
 	//执行上传
-	resp, err := lib.doRequest("POST", updateLink, header, body)
+	resp, err := lib.client.request("POST", updateLink + "?ret-json=1", header, body)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		b, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("[%s] %s", resp.Status, string(b))
+	}
+
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("读取错误:%s %s", resp.Status, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("错误:%s", resp.Status)
 	}
 
 	fmt.Println("文件ID", string(b))
