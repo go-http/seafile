@@ -80,3 +80,35 @@ func (cli *Client) GetRepoByName(name string) (*Repo, error) {
 
 	return nil, fmt.Errorf("未找到资料库")
 }
+
+//获取资料库的操作地址
+func (repo *Repo) getFileServerLink(operation string) (string, error) {
+	if operation != "update" && operation != "upload" {
+		return "", fmt.Errorf("不支持的操作: %s", operation)
+	}
+
+	uri := fmt.Sprintf("%s/%s-link/", repo.Uri(), operation)
+	resp, err := repo.client.doRequest("GET", uri, nil, nil)
+	if err != nil {
+		return "", fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	var link string
+	err = json.NewDecoder(resp.Body).Decode(&link)
+	if err != nil {
+		return "", fmt.Errorf("解析错误:%s %s", resp.Status, err)
+	}
+
+	return link, nil
+}
+
+//资料库文件上传地址
+func (repo *Repo) FileUploadLink() (string, error) {
+	return repo.getFileServerLink("upload")
+}
+
+//资料库文件更新地址
+func (repo *Repo) FileUpdateLink() (string, error) {
+	return repo.getFileServerLink("update")
+}
