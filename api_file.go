@@ -47,7 +47,8 @@ func (repo *Repo) GetFile(path string) (*File, error) {
 //检查文件是否存在，如果不存在则创建，返回文件本身
 func (repo *Repo) TouchFile(path string) (*File, error) {
 	file, err := repo.GetFile(path)
-	if err != nil {
+	if err == nil {
+		file.repo = repo
 		return file, nil
 	}
 
