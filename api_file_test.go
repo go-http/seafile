@@ -24,7 +24,7 @@ func TestFileUpdate(t *testing.T) {
 	}
 }
 
-func TestTouchFile(t *testing.T) {
+func TestFileTouch(t *testing.T) {
 	client := New(os.Getenv("SEAFILE_HOST"), os.Getenv("SEAFILE_TOKEN"))
 
 	repo, err := client.GetRepoByName("测试")
@@ -41,4 +41,25 @@ func TestTouchFile(t *testing.T) {
 	}
 
 	t.Logf("%+v", file)
+}
+
+func TestDeleteFile(t *testing.T) {
+	client := New(os.Getenv("SEAFILE_HOST"), os.Getenv("SEAFILE_TOKEN"))
+
+	repo, err := client.GetRepoByName("测试")
+	if err != nil {
+		t.Fatalf("获取资料库错误: %s", err)
+	}
+
+	file, err := repo.TouchFile("/file_to_be_delete.txt")
+	if err != nil {
+		t.Fatalf("创建测试文件错误: %s", err)
+	}
+
+	t.Logf("已创建准备删除的文件: %+v", file)
+
+	err = file.Delete()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

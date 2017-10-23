@@ -136,37 +136,6 @@ func (lib *Library) FetchFileContent(path string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-//重命名文件
-func (lib *Library) RenameFile(path, newname string) error {
-	q := url.Values{"p": {path}}
-
-	d := url.Values{
-		"operation": {"rename"},
-		"newname":   {newname},
-	}
-	body := bytes.NewBufferString(d.Encode())
-
-	hdr := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
-
-	resp, err := lib.doRequest("POST", "/file/?"+q.Encode(), hdr, body)
-	if err != nil {
-		return fmt.Errorf("请求错误:%s", err)
-	}
-	defer resp.Body.Close()
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil || len(b) == 0 {
-		return fmt.Errorf("读取错误: %s", err)
-	}
-
-	//FIXME:文档上说返回HTTP 301为成功，实测却是HTTP 200。
-	if resp.StatusCode == http.StatusOK {
-		return nil
-	}
-
-	return fmt.Errorf("[%s] %s", resp.Status, string(b))
-}
-
 //复制文件到另一个资料库的指定目录
 //Note:
 //  目标目录必须存在
