@@ -25,6 +25,11 @@ type File struct {
 	repo *Repo `json:"-"`
 }
 
+//文件完整路径
+func (file *File) Path() string {
+	return filepath.Join(file.ParentDir, file.Name)
+}
+
 func (repo *Repo) GetFile(path string) (*File, error) {
 	q := url.Values{"p": {path}}
 	resp, err := repo.client.apiGET(repo.Uri() + "/file/?" + q.Encode())
@@ -100,7 +105,7 @@ func (file *File) Update(content []byte) error {
 	part.Write(content)
 
 	//填充其他字段
-	writer.WriteField("target_file", filepath.Join(file.ParentDir, file.Name))
+	writer.WriteField("target_file", file.Path())
 
 	err = writer.Close()
 	if err != nil {
@@ -134,4 +139,22 @@ func (file *File) Update(content []byte) error {
 	file.Id = string(b)
 
 	return nil
+}
+
+//删除文件
+func (file *File) Delete() error {
+	q := url.Values{"p": {file.Path()}}
+
+	resp, err := file.repo.client.apiDELETE(file.repo.Uri() + "/file/?" + q.Encode())
+	if err != nil {
+		return fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	b, _ := ioutil.ReadAll(resp.Body)
+	return fmt.Errorf("[%s] %s", resp.Status, string(b))
 }
