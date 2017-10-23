@@ -1,10 +1,14 @@
 package seafile
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"time"
 )
 
@@ -68,7 +72,8 @@ func (repo *Repo) CreateFile(path string) (*File, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("资料库信息错误: %s", resp.Status)
+		b, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("[%s]%s", resp.Status, string(b))
 	}
 
 	var file File
@@ -80,4 +85,53 @@ func (repo *Repo) CreateFile(path string) (*File, error) {
 	file.repo = repo
 
 	return &file, nil
+}
+
+//更新文件内容
+func (file *File) Update(content []byte) error {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	//填充文件内容
+	part, err := writer.CreateFormFile("file", file.Name)
+	if err != nil {
+		return fmt.Errorf("创建Multipart错误:%s", err)
+	}
+	part.Write(content)
+
+	//填充其他字段
+	writer.WriteField("target_file", filepath.Join(file.ParentDir, file.Name))
+
+	err = writer.Close()
+	if err != nil {
+		return fmt.Errorf("写Multipart文件错误:%s", err)
+	}
+
+	//设置请求Header
+	header := http.Header{"Content-Type": {writer.FormDataContentType()}}
+
+	link, err := file.repo.FileUpdateLink()
+	if err != nil {
+		return fmt.Errorf("获取上传地址错误:%s", err)
+	}
+
+	//执行上传
+	resp, err := file.repo.client.request("POST", link+"?ret-json=1", header, body)
+	if err != nil {
+		return fmt.Errorf("请求错误:%s", err)
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("读取错误:%s", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("[%s] %s", resp.Status, string(b))
+	}
+
+	file.Id = string(b)
+
+	return nil
 }

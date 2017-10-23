@@ -177,24 +177,6 @@ func (lib *Library) UploadLink() (string, error) {
 	return link, nil
 }
 
-//获取资料库的更新地址
-func (lib *Library) UpdateLink() (string, error) {
-	resp, err := lib.doRequest("GET", "/update-link/", nil, nil)
-	if err != nil {
-		return "", fmt.Errorf("请求错误:%s", err)
-	}
-	defer resp.Body.Close()
-
-	var link string
-	err = json.NewDecoder(resp.Body).Decode(&link)
-	if err != nil {
-		return "", fmt.Errorf("解析错误:%s %s", resp.Status, err)
-	}
-
-	//返回值是"xxx"格式的，需要去掉头尾的引号
-	return link, nil
-}
-
 //资料库提交
 type LibraryCommit struct {
 	Id                string
