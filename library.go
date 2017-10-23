@@ -167,13 +167,14 @@ func (lib *Library) UploadLink() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
+	var link string
+	err = json.NewDecoder(resp.Body).Decode(&link)
 	if err != nil {
-		return "", fmt.Errorf("读取错误:%s %s", resp.Status, err)
+		return "", fmt.Errorf("解析错误:%s %s", resp.Status, err)
 	}
 
 	//返回值是"xxx"格式的，需要去掉头尾的引号
-	return string(b[1 : len(b)-1]), nil
+	return link, nil
 }
 
 //获取资料库的更新地址
@@ -184,13 +185,14 @@ func (lib *Library) UpdateLink() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
+	var link string
+	err = json.NewDecoder(resp.Body).Decode(&link)
 	if err != nil {
-		return "", fmt.Errorf("读取错误:%s %s", resp.Status, err)
+		return "", fmt.Errorf("解析错误:%s %s", resp.Status, err)
 	}
 
 	//返回值是"xxx"格式的，需要去掉头尾的引号
-	return string(b[1 : len(b)-1]), nil
+	return link, nil
 }
 
 //资料库提交
