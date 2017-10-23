@@ -99,7 +99,7 @@ func (cli *Client) GetLibrary(name string) (*Library, error) {
 	var err error
 	//如果name为空字符串，则获取默认资料库
 	if name == "" {
-		id,err = cli.GetDefaultLibraryId()
+		id, err = cli.GetDefaultLibraryId()
 		if err != nil {
 			return nil, err
 		}
@@ -129,19 +129,19 @@ func (cli *Client) GetLibrary(name string) (*Library, error) {
 
 //获取默认资料库ID
 func (cli *Client) GetDefaultLibraryId() (string, error) {
-	resp,err := cli.doRequest("GET", "/default-repo/", nil, nil)
-	if err!=nil {
+	resp, err := cli.doRequest("GET", "/default-repo/", nil, nil)
+	if err != nil {
 		return "", fmt.Errorf("获取默认资料库失败: %s", err)
 	}
 	defer resp.Body.Close()
 
-	var respInfo struct{
+	var respInfo struct {
 		Exists bool
 		RepoId string `json:"repo_id"`
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&respInfo)
-	if err!=nil {
+	if err != nil {
 		return "", fmt.Errorf("获取默认资料库失败: %s", err)
 	}
 
@@ -167,30 +167,14 @@ func (lib *Library) UploadLink() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
+	var link string
+	err = json.NewDecoder(resp.Body).Decode(&link)
 	if err != nil {
-		return "", fmt.Errorf("读取错误:%s %s", resp.Status, err)
+		return "", fmt.Errorf("解析错误:%s %s", resp.Status, err)
 	}
 
 	//返回值是"xxx"格式的，需要去掉头尾的引号
-	return string(b[1 : len(b)-1]), nil
-}
-
-//获取资料库的更新地址
-func (lib *Library) UpdateLink() (string, error) {
-	resp, err := lib.doRequest("GET", "/update-link/", nil, nil)
-	if err != nil {
-		return "", fmt.Errorf("请求错误:%s", err)
-	}
-	defer resp.Body.Close()
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("读取错误:%s %s", resp.Status, err)
-	}
-
-	//返回值是"xxx"格式的，需要去掉头尾的引号
-	return string(b[1 : len(b)-1]), nil
+	return link, nil
 }
 
 //资料库提交

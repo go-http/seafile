@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 )
 
@@ -56,11 +55,16 @@ func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[strin
 	}
 
 	//执行上传
-	resp, err := lib.doRequest("POST", uploadLink+"?ret-json=1", header, body)
+	resp, err := lib.client.request("POST", uploadLink+"?ret-json=1", header, body)
 	if err != nil {
 		return fmt.Errorf("请求错误:%s", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("[%s] %s", resp.Status, string(b))
+	}
 
 	respInfo := []DirectoryEntry{}
 	err = json.NewDecoder(resp.Body).Decode(&respInfo)
@@ -68,66 +72,6 @@ func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[strin
 		return fmt.Errorf("解析错误:%s", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("返回%s", resp.Status)
-	}
-
-	return nil
-}
-
-//更新文件内容
-//    fileContentMap的key是文件名，value是文件内容
-//当目标文件存在时，会自动重命名上传
-func (lib *Library) UpdateFileContent(targetFile string, content []byte) error {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	//填充文件内容
-	part, err := writer.CreateFormFile("file", filepath.Base(targetFile))
-	if err != nil {
-		return fmt.Errorf("创建Multipart错误:%s", err)
-	}
-	part.Write(content)
-
-	//填充其他字段
-	writer.WriteField("target_file", targetFile)
-
-	//FIXME:
-	//文档中提到使用relative_path，系统会自动创建不存在的路径
-	//但实际上好像没有效果，所以这里暂不支持这个参数
-	//writer.WriteField("relative_path", subDir)
-
-	err = writer.Close()
-	if err != nil {
-		return fmt.Errorf("写Multipart文件错误:%s", err)
-	}
-
-	//设置请求Header
-	header := http.Header{"Content-Type": {writer.FormDataContentType()}}
-
-	//获取上传地址
-	updateLink, err := lib.UpdateLink()
-	if err != nil {
-		return fmt.Errorf("获取上传地址错误:%s", err)
-	}
-
-	//执行上传
-	resp, err := lib.doRequest("POST", updateLink, header, body)
-	if err != nil {
-		return fmt.Errorf("请求错误:%s", err)
-	}
-	defer resp.Body.Close()
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("读取错误:%s %s", resp.Status, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("错误:%s", resp.Status)
-	}
-
-	fmt.Println("文件ID", string(b))
 	return nil
 }
 
@@ -190,37 +134,6 @@ func (lib *Library) FetchFileContent(path string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	return ioutil.ReadAll(resp.Body)
-}
-
-//重命名文件
-func (lib *Library) RenameFile(path, newname string) error {
-	q := url.Values{"p": {path}}
-
-	d := url.Values{
-		"operation": {"rename"},
-		"newname":   {newname},
-	}
-	body := bytes.NewBufferString(d.Encode())
-
-	hdr := http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}
-
-	resp, err := lib.doRequest("POST", "/file/?"+q.Encode(), hdr, body)
-	if err != nil {
-		return fmt.Errorf("请求错误:%s", err)
-	}
-	defer resp.Body.Close()
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil || len(b) == 0 {
-		return fmt.Errorf("读取错误: %s", err)
-	}
-
-	//FIXME:文档上说返回HTTP 301为成功，实测却是HTTP 200。
-	if resp.StatusCode == http.StatusOK {
-		return nil
-	}
-
-	return fmt.Errorf("[%s] %s", resp.Status, string(b))
 }
 
 //复制文件到另一个资料库的指定目录
