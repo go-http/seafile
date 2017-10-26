@@ -11,20 +11,67 @@ import (
 )
 
 type Dir struct {
-	Id        string `json:"obj_id"`
+	Id        string `json:"obj_id"` //Dir的ID貌似全是0
 	Name      string `json:"obj_name"`
-	Type      string
-	Mtime     time.Time
 	RepoId    string `json:"repo_id"`
 	ParentDir string `json:"parent_dir"`
+	Perm      string
 
-	repo   *Repo `json:"-"`
-	Detail DirDetail
+	Mtime     time.Time
+	Size      int
+	FileCount int   `json:"file_count"`
+	DirCount  int   `json:"dir_count"`
+	repo      *Repo `json:"-"`
 }
 
 //文件完整路径
 func (dir *Dir) Path() string {
 	return filepath.Join(dir.ParentDir, dir.Name)
+}
+
+//获取目录
+func (repo *Repo) GetDir(path string) (*Dir, error) {
+	q := url.Values{"path": {path}}
+	resp, err := repo.client.apiGET(repo.Uri() + "/dir/detail/?" + q.Encode())
+	if err != nil {
+		return nil, fmt.Errorf("请求文件信息失败: %s", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("文件信息错误: %s", resp.Status)
+	}
+
+	var detail struct {
+		Name      string
+		Path      string
+		Size      int
+		Mtime     time.Time
+		RepoId    string `json:"repo_id"`
+		FileCount int    `json:"file_count"`
+		DirCount  int    `json:"dir_count"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&detail)
+	if err != nil {
+		return nil, fmt.Errorf("解析文件夹信息失败: %s, %s", resp.Status, err)
+	}
+
+	fmt.Println(detail.Path)
+
+	dir := Dir{
+		//Id: detail.Id,//该接口暂时没有提供该信息
+		//Perm: detail.Perm,该接口暂时没有提供该信息
+		repo:      repo,
+		Name:      detail.Name,
+		Mtime:     detail.Mtime,
+		RepoId:    detail.RepoId,
+		ParentDir: filepath.Dir(path),
+		Size:      detail.Size,
+		FileCount: detail.FileCount,
+		DirCount:  detail.DirCount,
+	}
+
+	return &dir, nil
 }
 
 //创建文件夹
@@ -55,11 +102,12 @@ func (repo *Repo) Mk(path string) (*Dir, error) {
 }
 
 //文件夹内容结构
+//TODO:尝试与File、Dir合并
 type DirEntry struct {
 	Id         string
 	Name       string
 	Type       string //file或dir
-	Mtime      time.Time
+	Mtime      int
 	Permission string
 
 	ParentDir string `json:"parent_dir"` //仅在递归获取子目录时有效
@@ -77,7 +125,7 @@ type DirEntry struct {
 }
 
 //获取文件夹内容
-func (dir *Dir) GetEntriesWithOption(t string, recursive bool) ([]DirEntry, error) {
+func (dir *Dir) getEntriesWithOption(t string, recursive bool) ([]DirEntry, error) {
 	q := url.Values{
 		"t":         {t},
 		"p":         {dir.Path()},
@@ -88,7 +136,7 @@ func (dir *Dir) GetEntriesWithOption(t string, recursive bool) ([]DirEntry, erro
 		q.Set("recursive", "1")
 	}
 
-	resp, err := dir.repo.client.apiGET(dir.repo.Uri() + "/file/?" + q.Encode())
+	resp, err := dir.repo.client.apiGET(dir.repo.Uri() + "/dir/?" + q.Encode())
 	if err != nil {
 		return nil, fmt.Errorf("请求资料库信息失败: %s", err)
 	}
@@ -110,22 +158,22 @@ func (dir *Dir) GetEntriesWithOption(t string, recursive bool) ([]DirEntry, erro
 
 //获取文件夹的所有内容
 func (dir *Dir) GetEntries() ([]DirEntry, error) {
-	return dir.GetEntriesWithOption("", false)
+	return dir.getEntriesWithOption("", false)
 }
 
 //获取文件夹下的文件
 func (dir *Dir) GetSubFiles() ([]DirEntry, error) {
-	return dir.GetEntriesWithOption("f", false)
+	return dir.getEntriesWithOption("f", false)
 }
 
 //获取文件夹下的子文件夹
 func (dir *Dir) GetSubDirs() ([]DirEntry, error) {
-	return dir.GetEntriesWithOption("d", false)
+	return dir.getEntriesWithOption("d", false)
 }
 
-//递归获取文件夹所有的子目录
+//递归获取文件夹所有的子文件夹
 func (dir *Dir) GetSubDirTree() ([]DirEntry, error) {
-	return dir.GetEntriesWithOption("d", true)
+	return dir.getEntriesWithOption("d", true)
 }
 
 //删除文件夹
@@ -144,39 +192,4 @@ func (dir *Dir) Delete() error {
 
 	b, _ := ioutil.ReadAll(resp.Body)
 	return fmt.Errorf("[%s] %s", resp.Status, string(b))
-}
-
-//文件夹统计信息
-type DirDetail struct {
-	Name      string
-	Path      string
-	Size      int
-	Mtime     time.Time
-	RepoId    string `json:"repo_id"`
-	FileCount int    `json:"file_count"`
-	DirCount  int    `json:"dir_count"`
-}
-
-//获取文件夹统计信息
-func (dir *Dir) FetchDetail() error {
-	q := url.Values{"path": {dir.Path()}}
-	resp, err := dir.repo.client.apiGET(dir.repo.Uri() + "/dir/detail/?" + q.Encode())
-	if err != nil {
-		return fmt.Errorf("请求文件信息失败: %s", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("文件信息错误: %s", resp.Status)
-	}
-
-	var detail DirDetail
-	err = json.NewDecoder(resp.Body).Decode(&detail)
-	if err != nil {
-		return fmt.Errorf("解析文件信息失败: %s, %s", resp.Status, err)
-	}
-
-	dir.Detail = detail
-
-	return nil
 }
