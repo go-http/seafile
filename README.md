@@ -1,4 +1,7 @@
 # Seafile SDK For Golang
+
+[![GoDoc](https://godoc.org/github.com/athurg/seafile-go-sdk?status.svg)](http://godoc.org/github.com/athurg/seafile-go-sdk)
+
 Golang版本的Seafile Web API库
 
 # 当前支持的v2接口
