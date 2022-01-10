@@ -2,10 +2,11 @@
 package main
 
 import (
-	".."
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/go-http/seafile"
 )
 
 var sf *seafile.Client
