@@ -8,18 +8,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 //上传文件内容
 //    fileContentMap的key是文件名，value是文件内容
 //当目标文件存在时，会自动重命名上传
-func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[string][]byte) error {
-	//参数检查
-	if !strings.HasSuffix(parentDir, "/") {
-		return fmt.Errorf("目录%s必须以/结尾", parentDir)
-	}
-
+func (lib *Library) UploadFileContent(dir string, fileContentMap map[string][]byte) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -33,12 +27,9 @@ func (lib *Library) UploadFileContent(parentDir string, fileContentMap map[strin
 	}
 
 	//填充其他字段
-	writer.WriteField("parent_dir", parentDir)
-
-	//FIXME:
-	//文档中提到使用relative_path，系统会自动创建不存在的路径
-	//但实际上好像没有效果，所以这里暂不支持这个参数
-	//writer.WriteField("relative_path", subDir)
+	writer.WriteField("replace", "1")
+	writer.WriteField("parent_dir", "/")
+	writer.WriteField("relative_path", dir)
 
 	err := writer.Close()
 	if err != nil {
